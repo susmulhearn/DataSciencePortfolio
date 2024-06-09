@@ -1,26 +1,18 @@
-#brief: inputting lyrics and setting up rdata file for sentiment analysis
-
-path <- "tSSentimentA/src/closure.txt"
-lyrics <- paste(scan(path, what="character", sep= "\n"))
-
-#refining by setting up data frame
-dflyrics<-enframe (lyrics, name = "lineno", value = "lyricline")
-
-linenum<-dflyrics["lineno"]
-lyricwords=dflyrics[,"lyricline"]
-dftib=tibble(linenum, lyricwords)
-#finding junk lines and removing them
-verse<-which(dftib$lyricline == "[Verse 2]")
-chorus<-which(dftib$lyricline == "[Chorus]")
-remout<- c(verse, chorus)
-clean_lyrics <- dftib[-c(1,remout), ]
-#cleaning last row
-last_row<-clean_lyrics%>%tail(1)
-no_embed=last_row$lyricline=substr(last_row$lyricline, 1, nchar(last_row$lyricline)-5)
-clean_var<-gsub('[[:digit:]]+', '', last_row$lyricline)
-#fixing last element
-x=last_row[1,1]
-row_clean_var=tibble(x, lyricline=clean_var)
-#replacing last row
-cl_no_embeddf <- clean_lyrics %>% filter(row_number() <= n()-1)
-cl_final<-rbind(cl_no_embeddf, row_clean_var)
+#brief: create input file list to cycle through for cleaning, and then storing it in a file
+main_dir <- "tSSentimentA/data/Albums/forAnalysis"
+albumList <- list.dirs(main_dir)[- 1]
+print(albumList)
+for (albums in albumList)
+{
+  filelist <- list.files(path=albums, pattern="*.txt", full.names=TRUE, recursive=FALSE)
+  print(filelist)
+  source("tSSentimentA/src/cleanText.R")
+  for (files in filelist){
+    name<-files
+    cleaned_lyrics<-clean_text(path=name)
+    save_path<-file.path("/Users/susanmulhearn/R_portfolio/DataSciencePortfolio","tSSentimentA/data/Album/cleanedData", fsep="/")
+    setwd(save_path)
+  }
+  #save to rda file
+  save(cleaned_lyrics, file = "mydata.rda")
+}
